@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+        <title>CDP-TZ01B Tester</title>
+
+        <!-- Bootstrap -->
+        <link href="static/css/bootstrap.min.css" rel="stylesheet">
+
+        <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+          <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+        <h1>CDP-TZ01B Tester.</h1>
+        <div class="container-fluid">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Serial Number</h3>
+                </div>
+                <div class="panel-body">
+                    <form class="form-inline">
+                        <div class="form-group">
+                            <label class="sr-only" for="inputSerial">Serial Number</label>
+                                <div class="input-group">
+                                <div class="input-group-addon">TZ159</div>
+                                <input type="text" class="form-control" id="inputSerial" placeholder="XXXXX">
+                            </div>
+                        </div>
+                        <button id="btnStart" type="button" class="btn btn-primary"><span class="glyphicon glyphicon-cog"></span>START</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div id="testerBody" class="container-fluid">
+            <div class="row">
+                <div class=" col-md-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Status</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="container-fluid">
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resCurrent" class="col-md-8 label label-default">Current</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resVoltage" class="col-md-8 label label-default">Voltage</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resBrakeoutBoardFirm" class="col-md-8 label label-default">Write BreakoutBoard firmware</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resTZ1Firm" class="col-md-8 label label-default">Write CDP-TZ01B test firmware</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resSwitch1" class="col-md-8 label label-default">Push [SW1]</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resSwitch2" class="col-md-8 label label-default">Push [SW2]</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resDI" class="col-md-8 label label-default">DI</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resADC" class="col-md-8 label label-default">ADC</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resUART" class="col-md-8 label label-default">UART</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resI2C" class="col-md-8 label label-default">I2C</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="res9Axis" class="col-md-8 label label-default">9-Axis sensor</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resAirpressure" class="col-md-8 label label-default">Airpressure sensor</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resCharger" class="col-md-8 label label-default">Battry charger</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resUSB" class="col-md-8 label label-default">USB</div>
+                                    <div class="col-md-3">&nbsp;</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resBLE" class="col-md-8 label label-default">BLE</div>
+                                    <div id="resBLE_RSSI" class="col-md-3">--- dB</div>
+                                </p>
+                                <p class="row">
+                                    <div class="col-md-1"></div>
+                                    <div id="resRTC" class="col-md-8 label label-default">RTC</div>
+                                    <div id="resRTC_SECONDS" class="col-md-3">--- sec.</div>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="row">
+                        <div class="panel panel-info">
+                            <div class="panel-heading">
+                                <h4 class="panel-title"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>Legend</h4>
+                            </div>
+                            <div class="panel-body">
+                                <div class="container-fluid">
+                                    <p class="row">
+                                        <div class="col-md-6"><span class="label label-default">&nbsp;</span>Unexecuted</div>
+                                        <div class="col-md-6"><span class="label label-info">&nbsp;</span>Executing</div>
+                                    </p>
+                                    <p class="row">
+                                        <div class="col-md-6"><span class="label label-success">&nbsp;</span>Success</div>
+                                        <div class="col-md-6"><span class="label label-danger">&nbsp;</span>Failed</div>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+                                <h4 class="panel-title"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>Message</h4>
+                            </div>
+                            <div class="panel-body">
+                                <strong><span id="textMessage">---</span></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-1"></div>
+            </div>
+        </div>
+
+
+
+        <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+        <!-- Application script -->
+        <script src="static/js/tester_app.js"></script>
+
+        <!-- Include all compiled plugins (below), or include individual files as needed -->
+        <script src="static/js/bootstrap.min.js"></script>
+    </body>
+</html>
