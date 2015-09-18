@@ -9,44 +9,44 @@ import json
 import serial
 import time 
 
-def tester_sw(com, logger, ws):
+def tester_sw(com, results, ws):
 	#電源SW ON
-	send_command(com, 'P001\r', None)
+	utils.send_command(com, 'P001\r', None)
 	#起動待ち
 	com.flushInput()
 	com.timeout = 5
 	line = com.readline()
 	if line.find('TZ1 TEST PROGRAM') == -1:
 		msg = '{"tester":"SW1","result":false}'
-		websocket_send(ws, msg, logger)
+		utils.websocket_send(ws, msg, results)
 		
 		return False
 	#電源SW OFF
-	send_command(com, 'P000\r', None)
+	utils.send_command(com, 'P000\r', None)
 
 	#SW1(GPIO_1)チェック
 	com.flushInput()
 	com.timeout = 20
 	line = com.readline()
-	if (line.find('POWER INIT') == -1:
-		websocket_send(ws, '{"tester":"SW1","result":false}', logger)
+	if line.find('POWER INIT') == -1:
+		utils.websocket_send(ws, '{"tester":"SW1","result":false}', results)
 		return False
-	websocket_send(ws, '{"tester":"SW1","result":true}', logger)
+	utils.websocket_send(ws, '{"tester":"SW1","result":true}', results)
 
 	#SW2(GPIO_6)チェック
 	com.flushInput()
 	com.timeout = 20
 	line = com.readline()
-	if (line.find("RUNNING") == -1:
-		websocket_send(ws, '{"tester":"SW2","result":false}', logger)
+	if line.find("RUNNING") == -1:
+		utils.websocket_send(ws, '{"tester":"SW2","result":false}', results)
 		return False
 
 	#Testerファーム起動完了
-	websocket_send(ws, '{"tester":"SW2","result":true}', logger)
+	utils.websocket_send(ws, '{"tester":"SW2","result":true}', results)
 
-def tester_io(com, logger):
+def tester_io(com, logger, results, ws):
 	#IOモードへ切り替え
-	send_command(com, 'm001\r', None)
+	utils.send_command(com, 'm001\r', None)
 
 	results = {}
 	#DIチェック
@@ -59,9 +59,9 @@ def tester_io(com, logger):
 			cmd = "GL"	
 		else:
 			cmd = "GH"
-		send_command(com, "%s%s\r" % (cmd, key.zfill(2)))
+		utils.send_command(com, "%s%s\r" % (cmd, key.zfill(2)), None)
 	##TZ1のDIを読む
-	line = send_command(com, 'g000', logger)	
+	line = utils.send_command(com, 'g000', logger)	
 	res = json.loads(line)
 	di_res = di_res and (res['gpio'] == io_pattern)
 
@@ -73,42 +73,42 @@ def tester_io(com, logger):
 			cmd = "GL"	
 		else:
 			cmd = "GH"
-		send_command(com, "%s%s\r" % (cmd, key.zfill(2)))
+		utils.send_command(com, "%s%s\r" % (cmd, key.zfill(2)), None)
 	##TZ1のDIを読む
-	line = send_command(com, 'g000\r', logger)	
+	line = utils.send_command(com, 'g000\r', logger)	
 	res = json.loads(line)
 	di_res = di_res and (res['gpio'] == io_pattern)
 
 	if di_res:
-		websocket_send(ws, '{"tester":"DI","result":true}', logger)
+		utils.websocket_send(ws, '{"tester":"DI","result":true}', results)
 	else:
-		websocket_send(ws, '{"tester":"DI","result":false}', logger)
+		utils.websocket_send(ws, '{"tester":"DI","result":false}', results)
 
 	#ADCチェック
 	adc_res = False
 	adc_val = [0, 0, 0, 0, 0]
 	##ADCC12 Ch0
-	line = send_command(com, 'a000\r', logger)
+	line = utils.send_command(com, 'a000\r', logger)
 	res = json.loads(line)
 	if res:
 		adc_val[0] = res['adc']
 	##ADCC12 Ch1
-	line = send_command(com, 'a001\r', logger)
+	line = utils.send_command(com, 'a001\r', logger)
 	res = json.loads(line)
 	if res:
 		adc_val[1] = res['adc']
 	##ADCC12 Ch2
-	line = send_command(com, 'a002\r', logger)
+	line = utils.send_command(com, 'a002\r', logger)
 	res = json.loads(line)
 	if res:
 		adc_val[2] = res['adc']
 	##ADCC12 Ch3
-	line = send_command(com, 'a003\r', logger)
+	line = utils.send_command(com, 'a003\r', logger)
 	res = json.loads(line)
 	if res:
 		adc_val[3] = res['adc']
 	##ADCC24 Ch2
-	line = send_command(com, 'a102\r', logger)
+	line = utils.send_command(com, 'a102\r', logger)
 	res = json.loads(line)
 	if res:
 		adc_val[4] = res['adc']
@@ -125,9 +125,9 @@ def tester_io(com, logger):
 	adc_res = adc_res and (adc_val[4] < 200000000) and (adc_val[4] > 100000000)
 	### 判定結果通知
 	if adc_res:
-		websocket_send(ws, '{"tester":"ADC","result":true}', logger)
+		utils.websocket_send(ws, '{"tester":"ADC","result":true}', results)
 	else:
-		websocket_send(ws, '{"tester":"ADC","result":false}', logger)
+		utils.websocket_send(ws, '{"tester":"ADC","result":false}', results)
 
 	## UART Echo
 	echo_msg = 'The quick brown fox jumps over the lazy dog\n'
@@ -136,25 +136,26 @@ def tester_io(com, logger):
 	com_echo.flushInput()
 	com_echo.write(echo_msg)
 	line = com_echo.readline()
+	logger.write('{"cmd":"U","send":"%s","recv":"%s"}' % (echo_msg, line))
 	if line == echo_msg:
-		websocket_send(ws, '{"tester":"UART","result":true}', logger)
+		utils.websocket_send(ws, '{"tester":"UART","result":true}', results)
 	else:
-		websocket_send(ws, '{"tester":"UART","result":false}', logger)
+		utils.websocket_send(ws, '{"tester":"UART","result":false}', results)
 
 	## I2C PingPong
-	line = send_command(com, 'i000\r', logger)
+	line = utils.send_command(com, 'i000\r', logger)
 	res = json.loads(line)
 	if res:
 		if res['recv'] == 'PONG':
-			websocket_send(ws, '{"tester":"I2C","result":true}', logger)
+			utils.websocket_send(ws, '{"tester":"I2C","result":true}', results)
 		else:
-			websocket_send(ws, '{"tester":"I2C","result":false}', logger)
+			utils.websocket_send(ws, '{"tester":"I2C","result":false}', results)
 	else:
-		websocket_send(ws, '{"tester":"I2C","result":false}', logger)
+		utils.websocket_send(ws, '{"tester":"I2C","result":false}', results)
 
 	## 9軸センサ
 	sens_9axis_res = True
-	line = send_command(com, '9000\r', logger)
+	line = utils.send_command(com, '9000\r', logger)
 	res = json.loads(line)
 	if res:
 		##ジャイロ
@@ -169,60 +170,60 @@ def tester_io(com, logger):
 		sens_9axis_res = sens_9axis_res and not ((res['magnetometer'][0] == 0) and (res['magnetometer'][1] == 0) and (res['magnetometer'][2] == 0))
 		##判定結果通知
 		if sens_9axis_res:
-			websocket_send(ws, '{"tester":"9-Axis","result":true}', logger)
+			utils.websocket_send(ws, '{"tester":"9-Axis","result":true}', results)
 		else:
-			websocket_send(ws, '{"tester":"9-Axis","result":false}', logger)
+			utils.websocket_send(ws, '{"tester":"9-Axis","result":false}', results)
 	else:
-		websocket_send(ws, '{"tester":"9-Axis","result":false}', logger)
+		utils.websocket_send(ws, '{"tester":"9-Axis","result":false}', results)
 		
 	# 気圧センサー
 	sens_ap_res = True
-	line = send_command(com, 'p000\r', logger)
+	line = utils.send_command(com, 'p000\r', logger)
 	res = json.loads(line)
 	if res:
 		sens_ap_res = ((res['airpressure'] / 256) > 80000) and ((res['airpressure'] / 256) < 120000)
 		if sens_ap_res:
-			websocket_send(ws, '{"tester":"Airpressure","result":true}', logger)
+			utils.websocket_send(ws, '{"tester":"Airpressure","result":true}', results)
 		else:
-			websocket_send(ws, '{"tester":"Airpressure","result":false}', logger)
+			utils.websocket_send(ws, '{"tester":"Airpressure","result":false}', results)
 	else:
-		websocket_send(ws, '{"tester":"Airpressure","result":false}', logger)
+		utils.websocket_send(ws, '{"tester":"Airpressure","result":false}', results)
 		
 	# 充電ICステータス
-	line = send_command(com, 'c000\r', logger)
+	line = utils.send_command(com, 'c000\r', logger)
 	res = json.loads(line)
 	if res:
 		if res['reg'][0] == 0x10:
-			websocket_send(ws, '{"tester":"Charger","result":true}', logger)
+			utils.websocket_send(ws, '{"tester":"Charger","result":true}', results)
 		else:
-			websocket_send(ws, '{"tester":"Charger","result":false}', logger)
+			utils.websocket_send(ws, '{"tester":"Charger","result":false}', results)
 	else:
-		websocket_send(ws, '{"tester":"Charger","result":false}', logger)
+		utils.websocket_send(ws, '{"tester":"Charger","result":false}', results)
 
 	#選択モードへ切り替え
-	send_command(com, 'm000\r', None)
+	utils.send_command(com, 'm000\r', None)
 
-def tester_usb(com, logger, ws):
+def tester_usb(com, results, ws):
 	# USBモードへ切り替え
-	send_command(com, 'm002\r', None)
+	utils.send_command(com, 'm002\r', None)
 
 	# USB認識チェック
-	for i in range(0, 10)
+	for i in range(0, 10):
 		ret = commands.getstatusoutput('lsusb -d 0930:1703')
 		if len(ret[1]) > 0:
 			msg = '{"tester":"USB","result":true}'
-			websocket_send(ws, msg, logger)
+			utils.websocket_send(ws, msg, results)
 			break;
 	else:
 		msg = '{"tester":"USB","result":false}'
-		websocket_send(ws, msg, logger)
+		utils.websocket_send(ws, msg, results)
 
 	# 選択モードへ切り替え
-	send_command(com, 'm000\r', None)
+	utils.send_command(com, 'm000\r', None)
 
-def tester_ble(com, logger, ws):
+def tester_ble(com, results, ws):
 	# BLEモードへ切り替え
-	send_command(com, 'm003\r', None)
+	utils.send_command(com, 'm003\r', None)
 
 	# BLEスキャン
 	ret = commands.getstatusoutput('./get_rssi.sh')
@@ -231,14 +232,14 @@ def tester_ble(com, logger, ws):
 		msg = '{"tester":"BLE","result":true,"RSSI":%s}' % rssi
 	else:
 		msg = '{"tester":"BLE","result":false}'
-	websocket_send(ws, msg, logger)
+	utils.websocket_send(ws, msg, results)
 
 	# 選択モードへ切り替え
-	send_command(com, 'm000\r', None)
+	utils.send_command(com, 'm000\r', None)
 
-def tester_rtc(com, logger, ws):
+def tester_rtc(com, logger, results, ws):
 	start_time = datetime.datetime(2015, 1, 1, 0, 0, 0)
-	line = send_command(com, 'r000\r', logger)
+	line = utils.send_command(com, 'r000\r', logger)
 	res = json.loads(line)
 	if res:
 		now_time = datetime.datetime(res['year'], res['month'], res['day'], res['hour'], res['minute'], res['second'])
@@ -246,11 +247,12 @@ def tester_rtc(com, logger, ws):
 		if delta.seconds > 10:
 			msg = '{"tester":"RTC","result":true,"seconds":%d}' % delta.seconds
 		else:
-			msg = '{"tester":"RTC","result":false}'
-		websocket_send(ws, msg, logger)
+			msg = '{"tester":"RTC","result":false,"seconds":%d}' % delta.seconds
+		utils.websocket_send(ws, msg, results)
 	else:
 		msg = '{"tester":"RTC","result":false}'
-		websocket_send(ws, msg, logger)
+		utils.websocket_send(ws, msg, results)
 	
-def tester_terminate(com, logger):
-	send_command(com, 'm999\r', None)
+def tester_terminate(com):
+	utils.send_command(com, 'm999\r', None)
+

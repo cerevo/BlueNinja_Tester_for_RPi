@@ -8,6 +8,17 @@ from werkzeug.exceptions import abort
 
 import time
 
+import utils
+import power
+import firm_writer
+import tester
+
+UI_DEBUG = True
+#UI_DEBUG = False
+
+LOGS_PATH = './logs'
+RESULTS_PATH = './results'
+
 app = Flask(__name__)
 app.debug = True
 
@@ -19,94 +30,205 @@ def index():
 
 @app.route('/start')
 def start():
+	global serial_no
 	ws = request.environ['wsgi.websocket'] 
+	msg = ''
 	if not ws:
 		abort(400)
+
 	serial_no = ws.receive()
 	if serial_no.startswith('TZ1'):
-		ws.send('{"tester":"Start","result":true}')
+		msg = '{"tester":"Start","result":true, "serial_no":"%s"}' % serial_no
 	else:
-		ws.send('{"tester":"Start","result":false}')
+		serial_no = 'invalid_serial'
+		msg = '{"tester":"Start","result":false, "serial_no":"%s"}' % serial_no
+	
+	results = utils.logger_init('%s/%s.json' % (RESULTS_PATH, serial_no), 'wb')
+	utils.websocket_send(ws, msg, results)
+	utils.logger_term(results)
+	return 'OK'
 
 @app.route('/power')
 def power():
+	global serial_no
 	ws = request.environ['wsgi.websocket'] 
 	if not ws:
 		abort(400)
 	ws.receive()
-	time.sleep(0.5)
-	ws.send('{"tester":"Current","result":true}')
-	time.sleep(0.5)
-	ws.send('{"tester":"Voltage","result":true}')
+	logger = utils.logger_init('%s/%s.json' % (LOGS_PATH, serial_no), 'wb')
+	results = utils.logger_init('%s/%s.json' % (RESULTS_PATH, serial_no))
+	if UI_DEBUG:
+		time.sleep(0.5)
+		utils.websocket_send(ws, '{"tester":"Current","result":true}', results)
+		time.sleep(0.5)
+		utils.websocket_send(ws, '{"tester":"Voltage","result":true}', results)
+	else:
+		com = utils.command_open()
+		if com:
+			power.check(com, ws, logger, results)
+			utils.command_close(com)
+		else:
+			utils.websocket_send(ws, '{"tester":"Current","result":false}', results)
+			utils.websocket_send(ws, '{"tester":"Voltage","result":false}', results)
+	utils.logger_term(logger)
+	utils.logger_term(results)
+	return 'OK'
 
 @app.route('/bbfirm')
 def brakeout_firm():
+	global serial_no
 	ws = request.environ['wsgi.websocket'] 
 	if not ws:
 		abort(400)
-	time.sleep(1)
-	ws.send('{"tester":"BrakeoutBoardFirm","result":true}')
+	results = utils.logger_init('%s/%s.json' % (RESULTS_PATH, serial_no))
+	if UI_DEBUG:
+		time.sleep(1)
+		utils.websocket_send(ws, '{"tester":"BreakoutBoardFirm","result":true}', results)
+	else:
+		com = utils.command_open()
+		if firm_writer.write_breakout(com):
+			utils.websocket_send(ws, '{"tester":"BreakoutBoardFirm","result":true}', results)
+		else:
+			utils.websocket_send(ws, '{"tester":"BreakoutBoardFirm","result":false}', results)
+		utils.command_close(com)
+	utils.logger_term(results)
+	return 'OK'
 
 @app.route('/tzfirm')
 def tz1_firm():
+	global serial_no
 	ws = request.environ['wsgi.websocket'] 
 	if not ws:
 		abort(400)
-	time.sleep(10)
-	ws.send('{"tester":"TZ1Firm","result":true}')
+	results = utils.logger_init('%s/%s.json' % (RESULTS_PATH, serial_no))
+	if UI_DEBUG:
+		time.sleep(5)
+		utils.websocket_send(ws, '{"tester":"TZ1Firm","result":true}', results)
+	else:
+		com = utils.command_open()
+		if firm_writer.write_breakout(com):
+			utils.websocket_send(ws, '{"tester":"TZ1Firm","result":true}', results)
+		else:
+			utils.websocket_send(ws, '{"tester":"TZ1Firm","result":false}', results)
+		utils.command_close(com)
+	utils.logger_term(results)
+	return 'OK'
 
 @app.route('/switch')
 def switch():
+	global serial_no
 	ws = request.environ['wsgi.websocket'] 
 	if not ws:
 		abort(400)
-	time.sleep(0.5)
-	ws.send('{"tester":"SW1","result":true}')
-	time.sleep(0.5)
-	ws.send('{"tester":"SW2","result":true}')
+	results = utils.logger_init('%s/%s.json' % (RESULTS_PATH, serial_no))
+	if UI_DEBUG:
+		time.sleep(0.5)
+		utils.websocket_send(ws, '{"tester":"SW1","result":true}', results)
+		time.sleep(0.5)
+		utils.websocket_send(ws, '{"tester":"SW2","result":true}', results)
+	else:
+		com = utils.command_open()
+		tester.tester_sw(com, results, ws)
+		utils.command_close(com)
+	utils.logger_term(results)
+	return 'OK'
 
 @app.route('/io')
 def io():
+	global serial_no
 	ws = request.environ['wsgi.websocket'] 
 	if not ws:
 		abort(400)
-	time.sleep(0.1)
-	ws.send('{"tester":"DI","result":true}')
-	time.sleep(0.1)
-	ws.send('{"tester":"ADC","result":true}')
-	time.sleep(0.1)
-	ws.send('{"tester":"UART","result":true}')
-	time.sleep(0.1)
-	ws.send('{"tester":"I2C","result":true}')
-	time.sleep(0.1)
-	ws.send('{"tester":"9-Axis","result":true}')
-	time.sleep(0.1)
-	ws.send('{"tester":"Airpressure","result":true}')
-	time.sleep(0.1)
-	ws.send('{"tester":"Charger","result":true}')
+	logger = utils.logger_init('%s/%s.json' % (LOGS_PATH, serial_no))
+	results = utils.logger_init('%s/%s.json' % (RESULTS_PATH, serial_no))
+	if UI_DEBUG:
+		time.sleep(0.1)
+		utils.websocket_send(ws, '{"tester":"DI","result":true}', results)
+		time.sleep(0.1)
+		utils.websocket_send(ws, '{"tester":"ADC","result":true}', results)
+		time.sleep(0.1)
+		utils.websocket_send(ws, '{"tester":"UART","result":true}', results)
+		time.sleep(0.1)
+		utils.websocket_send(ws, '{"tester":"I2C","result":true}', results)
+		time.sleep(0.1)
+		utils.websocket_send(ws, '{"tester":"9-Axis","result":true}', results)
+		time.sleep(0.1)
+		utils.websocket_send(ws, '{"tester":"Airpressure","result":true}', results)
+		time.sleep(0.1)
+		utils.websocket_send(ws, '{"tester":"Charger","result":true}', results)
+	else:
+		com = utils.command_open()
+		tester.tester_io(com, logger, results, ws)
+		utils.command_close(com)
+	utils.logger_term(logger)
+	utils.logger_term(results)
+	return 'OK'
 
 @app.route('/usb')
 def usb():
+	global serial_no
 	ws = request.environ['wsgi.websocket'] 
 	if not ws:
 		abort(400)
-	time.sleep(1)
-	ws.send('{"tester":"USB","result":true}')
+	results = utils.logger_init('%s/%s.json' % (RESULTS_PATH, serial_no))
+	if UI_DEBUG:
+		time.sleep(1)
+		utils.websocket_send(ws, '{"tester":"USB","result":true}', results)
+	else:
+		com = utils.command_open()
+		tester.tester_usb(com, results, ws)
+		utils.command_close(com)
+	utils.logger_term(results)
+	return 'OK'
 
 @app.route('/ble')
 def ble():
+	global serial_no
 	ws = request.environ['wsgi.websocket'] 
 	if not ws:
 		abort(400)
-	time.sleep(1)
-	ws.send('{"tester":"BLE","result":true,"RSSI":-50}')
+	results = utils.logger_init('%s/%s.json' % (RESULTS_PATH, serial_no))
+	if UI_DEBUG:
+		time.sleep(1)
+		utils.websocket_send(ws, '{"tester":"BLE","result":true,"RSSI":-50}', results)
+	else:
+		com = utils.command_open()
+		tester.tester_ble(com, results, ws)
+		utils.command_close(com)
+	utils.logger_term(results)
+	return 'OK'
 
 @app.route('/rtc')
 def rtc():
 	ws = request.environ['wsgi.websocket'] 
 	if not ws:
 		abort(400)
-	ws.send('{"tester":"RTC","result":true,"seconds":120}')
+	results = utils.logger_init('%s/%s.json' % (RESULTS_PATH, serial_no))
+	if UI_DEBUG:
+		utils.websocket_send(ws, '{"tester":"RTC","result":true,"seconds":120}', results)
+	else:
+		com = utils.command_open()
+		tester.tester_rtc(com, results, ws)
+		utils.command_close(com)
+	utils.logger_term(results)
+	return 'OK'
+
+@app.route('/term')
+def term():
+	ws = request.environ['wsgi.websocket'] 
+	if not ws:
+		abort(400)
+	results = utils.logger_init('%s/%s.json' % (RESULTS_PATH, serial_no))
+	if UI_DEBUG:
+		pass
+	else:
+		com = utils.command_open()
+		tester.tester_terminate(com)	#ファームウェア停止
+		firm_writer.erase_tester(com)	#ファームウェア消去
+		utils.command_close(com)
+	utils.websocket_send(ws, '{"tester":"Terminated","result":true}', results)
+	utils.logger_term(results)
+	return 'OK'
 
 if __name__ == '__main__':
 	http_server = WSGIServer(('', 5000), app, handler_class=WebSocketHandler)

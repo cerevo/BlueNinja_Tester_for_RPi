@@ -5,6 +5,7 @@ Pythonやシェルスクリプトで書いた検査プログラムとWebから�
 ## 動作に必要なモノ
 * Python 2.7.x  
   以下はpipでインストールする
+    * pyserial
     * gevent-websocket 
     * flask
 * BlueZ 5.3x http://www.bluez.org/  

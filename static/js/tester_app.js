@@ -33,6 +33,7 @@ var wsIo;
 var wsUSB;
 var wsBLE;
 var wsRTC;
+var wsTerm;
 
 var serialNo;
 var urlBase;
@@ -142,8 +143,9 @@ function wsPower_onmessage(e)
 					wsBbFirm.send('');
 				};
 			} else {
+				/* テスト終了 */
+				resVoltage.addClass('label-danger');
 				message_set_failed();
-				resCurrent.addClass('label-danger');
 			}
 			break;
 	}
@@ -165,8 +167,9 @@ function wsBbFirm_onmessage(e)
 			wsTzFirm.send('');
 		};
 	} else {
-		message_set_failed();
+		/* テスト終了 */
 		resBrakeoutBoardFirm.addClass('label-danger');
+		message_set_failed();
 	}
 }
 
@@ -188,8 +191,9 @@ function wsTzFirm_onmessage(e)
 			wsSwitch.send('');
 		};
 	} else {
-		message_set_failed();
+		/* テスト終了 */
 		resTZ1Firm.addClass('label-danger');
+		message_set_failed();
 	}
 }
 
@@ -203,7 +207,8 @@ function wsSwitch_onmessage(e)
 		if (json.result) {
 			resSwitch1.addClass('label-success');
 		} else {
-			resSwitch2.addClass('label-danger');
+			/* テスト終了 */
+			resSwitch1.addClass('label-danger');
 			message_set_failed();
 		}
 		break;
@@ -232,8 +237,9 @@ function wsSwitch_onmessage(e)
 				wsIo.send('');
 			};
 		} else {
-			message_set_failed();
+			/* テスト終了 */
 			resSwitch2.addClass('label-danger');
+			message_set_failed();
 		}
 	}
 }
@@ -362,6 +368,16 @@ function wsRTC_onmessage(e)
 	} else {
 		resRTC.addClass('label-danger');
 	}
+	/* テスト終了処理 */
+	wsTerm = new WebSocket(urlBase + '/term');
+	wsTerm.onmessage = wsTerm_onmessage;
+	wsTerm.onopen = function() {
+		wsTerm.send('');
+	};
+}
+
+function wsTerm_onmessage(e)
+{
 	if (result_check_success()) {
 		message_set_all_success();
 	} else {

@@ -1,3 +1,4 @@
+# coding: utf-8
 import os
 import os.path
 import serial
@@ -7,8 +8,8 @@ COM_DEV  = '/dev/ttyUSB0'
 COM_BOUD = 9600
 
 #ログ出力
-def logger_init(path):
-	return open(logpath)
+def logger_init(path, mode='ab'):
+	return open(path, mode)
 
 def logger_term(logger):
 	logger.close()
@@ -19,7 +20,10 @@ def logger_put(logger, msg):
 
 #コマンド送信
 def command_open():
-	com = serial(COM_DEV, COM_BOUD)
+	try:
+		com = serial.Serial(COM_DEV, COM_BOUD)
+	except:
+		com = None
 	return com
 
 def command_close(com):

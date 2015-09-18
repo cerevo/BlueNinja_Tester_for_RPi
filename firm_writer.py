@@ -16,7 +16,7 @@ def check_mount():
 	ret = commands.getstatusoutput('mount -l | awk "/CDP-TZ01B/ {print $1}"')
 	return ret[1]
 
-def check_firm_type():
+def check_type():
 	if os.path.exists('TZ1/firmware.bin'):
 		return "ISP"
 	if os.path.exists('TZ1/detected'):
@@ -29,7 +29,7 @@ def mount_tz1(dev):
 def umount_tz1(dev):
 	return commands.getstatusoutput("sudo umount %s" % dev)
 
-def firm_write_brakeout(com, logger):
+def write_brakeout(com):
 	ret = False
 	#マウント済みか確認
 	mount = check_mount()
@@ -42,7 +42,7 @@ def firm_write_brakeout(com, logger):
 		else:
 			return False
 	#ISPモードで起動してるか確認
-	fwtype = check_firm_type() 
+	fwtype = check_type() 
 	if fwtype == "Interface":
 		return True	#すでに書き込まれている
 	if fwtype == "":
@@ -52,11 +52,13 @@ def firm_write_brakeout(com, logger):
 	if res[1].find('Firmware update complete!') > -1:
 		ret = True
 	#USB電源再投入
-	send_command(com, 'U000\r', None)
+	utils.send_command(com, 'U000\r', None)
 	time.sleep(0.5)
-	send_command(com, 'U001\r', None) 
+	utils.send_command(com, 'U001\r', None) 
+	
+	return ret
 
-def firm_write_tester(com, logger):
+def write_tester():
 	#マウント済みか確認
 	mount = check_mount()
 	if mount == '':
@@ -68,7 +70,7 @@ def firm_write_tester(com, logger):
 		else:
 			return False
 	#インターフェースファームで起動してるか確認
-	if check_firm_type() == "ISP":
+	if check_type() == "ISP":
 		return False	#インターフェースのファームが動いてない
 	#binファイルをコピー(書き込み)
 	ret = commands.getstatusoutput("sudo cp %s TZ1/" % FIRM_TESTER)
@@ -81,15 +83,16 @@ def firm_write_tester(com, logger):
 		pass
 	while os.path.exists(mount) == False:
 		pass
+	return True
 
-def firm_erase_tester(com):
+def erase_tester(com):
 	com.flushInput()
-	send_command(com, 'P000\r', None) #電源SW   OFF
-	send_command(com, 'R001\r', None) #リセット ON
-	send_command(com, 'E001\r', None) #イレース ON
+	utils.send_command(com, 'P000\r', None) #電源SW   OFF
+	utils.send_command(com, 'R001\r', None) #リセット ON
+	utils.send_command(com, 'E001\r', None) #イレース ON
 	time.sleep(0.1)
-	send_command(com, 'P001\r', None) #電源SW   ON
-	send_command(com, 'R000\r', None) #リセット OFF
+	utils.send_command(com, 'P001\r', None) #電源SW   ON
+	utils.send_command(com, 'R000\r', None) #リセット OFF
 	time.sleep(3)
-	semd_command(com, 'P000\r', None) #電源SW   OFF
+	utils.semd_command(com, 'P000\r', None) #電源SW   OFF
 	
