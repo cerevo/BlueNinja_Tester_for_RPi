@@ -19,9 +19,10 @@ def logger_put(logger, msg):
 		logger.write(msg)
 
 #コマンド送信
-def command_open():
+def command_open(timeout=5):
 	try:
 		com = serial.Serial(COM_DEV, COM_BOUD)
+		com.timeout = timeout 
 	except:
 		com = None
 	return com

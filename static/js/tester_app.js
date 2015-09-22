@@ -128,6 +128,7 @@ function wsPower_onmessage(e)
 				resCurrent.addClass('label-success');
 			} else {
 				resCurrent.addClass('label-danger');
+				message_set_failed();
 			}
 			break;
 		case 'Voltage':

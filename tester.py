@@ -11,7 +11,7 @@ import time
 
 def tester_sw(com, results, ws):
 	#電源SW ON
-	utils.send_command(com, 'P001\r', None)
+	utils.command_send(com, 'P001\r', None)
 	#起動待ち
 	com.flushInput()
 	com.timeout = 5
@@ -22,7 +22,7 @@ def tester_sw(com, results, ws):
 		
 		return False
 	#電源SW OFF
-	utils.send_command(com, 'P000\r', None)
+	utils.command_send(com, 'P000\r', None)
 
 	#SW1(GPIO_1)チェック
 	com.flushInput()
@@ -46,7 +46,7 @@ def tester_sw(com, results, ws):
 
 def tester_io(com, logger, results, ws):
 	#IOモードへ切り替え
-	utils.send_command(com, 'm001\r', None)
+	utils.command_send(com, 'm001\r', None)
 
 	results = {}
 	#DIチェック
@@ -59,9 +59,9 @@ def tester_io(com, logger, results, ws):
 			cmd = "GL"	
 		else:
 			cmd = "GH"
-		utils.send_command(com, "%s%s\r" % (cmd, key.zfill(2)), None)
+		utils.command_send(com, "%s%s\r" % (cmd, key.zfill(2)), None)
 	##TZ1のDIを読む
-	line = utils.send_command(com, 'g000', logger)	
+	line = utils.command_send(com, 'g000', logger)	
 	res = json.loads(line)
 	di_res = di_res and (res['gpio'] == io_pattern)
 
@@ -73,9 +73,9 @@ def tester_io(com, logger, results, ws):
 			cmd = "GL"	
 		else:
 			cmd = "GH"
-		utils.send_command(com, "%s%s\r" % (cmd, key.zfill(2)), None)
+		utils.command_send(com, "%s%s\r" % (cmd, key.zfill(2)), None)
 	##TZ1のDIを読む
-	line = utils.send_command(com, 'g000\r', logger)	
+	line = utils.command_send(com, 'g000\r', logger)	
 	res = json.loads(line)
 	di_res = di_res and (res['gpio'] == io_pattern)
 
@@ -88,27 +88,27 @@ def tester_io(com, logger, results, ws):
 	adc_res = False
 	adc_val = [0, 0, 0, 0, 0]
 	##ADCC12 Ch0
-	line = utils.send_command(com, 'a000\r', logger)
+	line = utils.command_send(com, 'a000\r', logger)
 	res = json.loads(line)
 	if res:
 		adc_val[0] = res['adc']
 	##ADCC12 Ch1
-	line = utils.send_command(com, 'a001\r', logger)
+	line = utils.command_send(com, 'a001\r', logger)
 	res = json.loads(line)
 	if res:
 		adc_val[1] = res['adc']
 	##ADCC12 Ch2
-	line = utils.send_command(com, 'a002\r', logger)
+	line = utils.command_send(com, 'a002\r', logger)
 	res = json.loads(line)
 	if res:
 		adc_val[2] = res['adc']
 	##ADCC12 Ch3
-	line = utils.send_command(com, 'a003\r', logger)
+	line = utils.command_send(com, 'a003\r', logger)
 	res = json.loads(line)
 	if res:
 		adc_val[3] = res['adc']
 	##ADCC24 Ch2
-	line = utils.send_command(com, 'a102\r', logger)
+	line = utils.command_send(com, 'a102\r', logger)
 	res = json.loads(line)
 	if res:
 		adc_val[4] = res['adc']
@@ -143,7 +143,7 @@ def tester_io(com, logger, results, ws):
 		utils.websocket_send(ws, '{"tester":"UART","result":false}', results)
 
 	## I2C PingPong
-	line = utils.send_command(com, 'i000\r', logger)
+	line = utils.command_send(com, 'i000\r', logger)
 	res = json.loads(line)
 	if res:
 		if res['recv'] == 'PONG':
@@ -155,7 +155,7 @@ def tester_io(com, logger, results, ws):
 
 	## 9軸センサ
 	sens_9axis_res = True
-	line = utils.send_command(com, '9000\r', logger)
+	line = utils.command_send(com, '9000\r', logger)
 	res = json.loads(line)
 	if res:
 		##ジャイロ
@@ -178,7 +178,7 @@ def tester_io(com, logger, results, ws):
 		
 	# 気圧センサー
 	sens_ap_res = True
-	line = utils.send_command(com, 'p000\r', logger)
+	line = utils.command_send(com, 'p000\r', logger)
 	res = json.loads(line)
 	if res:
 		sens_ap_res = ((res['airpressure'] / 256) > 80000) and ((res['airpressure'] / 256) < 120000)
@@ -190,7 +190,7 @@ def tester_io(com, logger, results, ws):
 		utils.websocket_send(ws, '{"tester":"Airpressure","result":false}', results)
 		
 	# 充電ICステータス
-	line = utils.send_command(com, 'c000\r', logger)
+	line = utils.command_send(com, 'c000\r', logger)
 	res = json.loads(line)
 	if res:
 		if res['reg'][0] == 0x10:
@@ -201,11 +201,11 @@ def tester_io(com, logger, results, ws):
 		utils.websocket_send(ws, '{"tester":"Charger","result":false}', results)
 
 	#選択モードへ切り替え
-	utils.send_command(com, 'm000\r', None)
+	utils.command_send(com, 'm000\r', None)
 
 def tester_usb(com, results, ws):
 	# USBモードへ切り替え
-	utils.send_command(com, 'm002\r', None)
+	utils.command_send(com, 'm002\r', None)
 
 	# USB認識チェック
 	for i in range(0, 10):
@@ -219,11 +219,11 @@ def tester_usb(com, results, ws):
 		utils.websocket_send(ws, msg, results)
 
 	# 選択モードへ切り替え
-	utils.send_command(com, 'm000\r', None)
+	utils.command_send(com, 'm000\r', None)
 
 def tester_ble(com, results, ws):
 	# BLEモードへ切り替え
-	utils.send_command(com, 'm003\r', None)
+	utils.command_send(com, 'm003\r', None)
 
 	# BLEスキャン
 	ret = commands.getstatusoutput('./get_rssi.sh')
@@ -235,11 +235,11 @@ def tester_ble(com, results, ws):
 	utils.websocket_send(ws, msg, results)
 
 	# 選択モードへ切り替え
-	utils.send_command(com, 'm000\r', None)
+	utils.command_send(com, 'm000\r', None)
 
 def tester_rtc(com, logger, results, ws):
 	start_time = datetime.datetime(2015, 1, 1, 0, 0, 0)
-	line = utils.send_command(com, 'r000\r', logger)
+	line = utils.command_send(com, 'r000\r', logger)
 	res = json.loads(line)
 	if res:
 		now_time = datetime.datetime(res['year'], res['month'], res['day'], res['hour'], res['minute'], res['second'])
@@ -254,5 +254,5 @@ def tester_rtc(com, logger, results, ws):
 		utils.websocket_send(ws, msg, results)
 	
 def tester_terminate(com):
-	utils.send_command(com, 'm999\r', None)
+	utils.command_send(com, 'm999\r', None)
 

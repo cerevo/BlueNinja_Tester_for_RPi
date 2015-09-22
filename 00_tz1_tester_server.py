@@ -9,12 +9,12 @@ from werkzeug.exceptions import abort
 import time
 
 import utils
-import power
+import tz_power 
 import firm_writer
 import tester
 
-UI_DEBUG = True
-#UI_DEBUG = False
+#UI_DEBUG = True
+UI_DEBUG = False
 
 LOGS_PATH = './logs'
 RESULTS_PATH = './results'
@@ -65,7 +65,7 @@ def power():
 	else:
 		com = utils.command_open()
 		if com:
-			power.check(com, ws, logger, results)
+			tz_power.check(com, ws, logger, results)
 			utils.command_close(com)
 		else:
 			utils.websocket_send(ws, '{"tester":"Current","result":false}', results)
@@ -106,7 +106,9 @@ def tz1_firm():
 		utils.websocket_send(ws, '{"tester":"TZ1Firm","result":true}', results)
 	else:
 		com = utils.command_open()
-		if firm_writer.write_breakout(com):
+
+		firm_writer.erase_tester(com)
+		if firm_writer.write_tester():
 			utils.websocket_send(ws, '{"tester":"TZ1Firm","result":true}', results)
 		else:
 			utils.websocket_send(ws, '{"tester":"TZ1Firm","result":false}', results)
