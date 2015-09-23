@@ -7,18 +7,19 @@ import json
 import time
 
 def check(com, ws, logger, results):
+	#USB電源ON
+	utils.command_send(com, 'U000\r', None)
 	#TZ1電源SW ON
 	line = utils.command_send(com, "P001\r", None)
 	if not line:
 		utils.websocket_send(ws, '{"tester":"Current","result":false}', results)
 		return False
-	#USB電源ON
-	utils.command_send(com, 'U000\r', None)
-	
 	#バッテリー充電Enable
 	utils.command_send(com, "B001\r", None)
-	time.sleep(0.2)
+	time.sleep(0.5)
 	utils.command_send(com, "B000\r", None)
+
+	time.sleep(0.5)
 	
 	#過電流検出チェック
 	line = utils.command_send(com, "C000\r", logger)

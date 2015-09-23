@@ -11,7 +11,9 @@ var resCurrent;
 var resVoltage;
 var resBrakeoutBoardFirm;
 var resTZ1Firm;
-var resSwitch;
+var resTesterRun;
+var resSwitch1;
+var resSwitch2;
 var resDI;
 var resADC;
 var resUART;
@@ -185,6 +187,8 @@ function wsTzFirm_onmessage(e)
 		wsSwitch = new WebSocket(urlBase + '/switch');
 		wsSwitch.onmessage = wsSwitch_onmessage;
 		wsSwitch.onopen = function() {
+			resTesterRun.removeClass('label-default');
+			resTesterRun.addClass('label-info');
 			resSwitch1.removeClass('label-default');
 			resSwitch1.addClass('label-info');
 			resSwitch2.removeClass('label-default');
@@ -203,6 +207,16 @@ function wsSwitch_onmessage(e)
 {
 	var json = $.parseJSON(e.data);
 	switch (json.tester) {
+	case 'RUN':
+		resTesterRun.removeClass('label-info');
+		if (json.result) {
+			resTesterRun.addClass('label-success');
+		} else {
+			/* テスト終了 */
+			resTesterRun.addClass('label-danger');
+			message_set_failed();
+		}
+		break;
 	case 'SW1':
 		resSwitch1.removeClass('label-info');
 		if (json.result) {
@@ -400,6 +414,7 @@ $(function() {
 	resVoltage = $("#resVoltage");
 	resBrakeoutBoardFirm = $("#resBrakeoutBoardFirm");
 	resTZ1Firm = $("#resTZ1Firm");
+	resTesterRun = $("#resTesterRun");
 	resSwitch1 = $("#resSwitch1");
 	resSwitch2 = $("#resSwitch2");
 	resDI = $("#resDI");

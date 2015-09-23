@@ -102,13 +102,11 @@ def tz1_firm():
 		abort(400)
 	results = utils.logger_init('%s/%s.json' % (RESULTS_PATH, serial_no))
 	if UI_DEBUG:
-		time.sleep(5)
 		utils.websocket_send(ws, '{"tester":"TZ1Firm","result":true}', results)
 	else:
 		com = utils.command_open()
 
-		firm_writer.erase_tester(com)
-		if firm_writer.write_tester():
+		if firm_writer.write_tester(com):
 			utils.websocket_send(ws, '{"tester":"TZ1Firm","result":true}', results)
 		else:
 			utils.websocket_send(ws, '{"tester":"TZ1Firm","result":false}', results)
@@ -205,14 +203,16 @@ def rtc():
 	ws = request.environ['wsgi.websocket'] 
 	if not ws:
 		abort(400)
+	logger = utils.logger_init('%s/%s.json' % (LOGS_PATH, serial_no))
 	results = utils.logger_init('%s/%s.json' % (RESULTS_PATH, serial_no))
 	if UI_DEBUG:
 		utils.websocket_send(ws, '{"tester":"RTC","result":true,"seconds":120}', results)
 	else:
 		com = utils.command_open()
-		tester.tester_rtc(com, results, ws)
+		tester.tester_rtc(com, logger, results, ws)
 		utils.command_close(com)
 	utils.logger_term(results)
+	utils.logger_term(logger)
 	return 'OK'
 
 @app.route('/term')

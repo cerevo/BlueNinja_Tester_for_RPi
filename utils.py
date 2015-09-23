@@ -31,6 +31,7 @@ def command_close(com):
 	com.close()
 
 def command_send(com, cmd, logger):
+	com.flushInput()
 	com.write(cmd)
 	line = com.readline()
 	if logger != None:
