@@ -4,6 +4,7 @@ var panelMessage;
 var inputSerial;
 //Button
 var btnStart;
+var btnInc;
 //text
 var textMessage;
 //Result labels
@@ -405,8 +406,10 @@ $(function() {
 	panelMessage = $('#panelMessage');
 	//Input
 	inputSerial = $("#inputSerial");
+	inputSerial.val("00000");
 	//Button
 	btnStart = $("#btnStart");
+	btnInc = $("#btnInc");
 	//Text
 	textMessage = $('#textMessage');
 	//Result labels
@@ -438,5 +441,10 @@ $(function() {
 		wsStart.onopen = function() {
 			wsStart.send(serialNo);
 		};
+	});
+
+	btnInc.click(function() {
+		index = parseInt(inputSerial.val());
+		inputSerial.val(('00000' + (index + 1)).slice(-5));
 	});
 });

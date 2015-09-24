@@ -195,7 +195,7 @@ def tester_io(com, logger, results, ws):
 			##加速度
 			sens_9axis_res = sens_9axis_res and (res['accel'][0] > -200) and (res['accel'][0] < 200)
 			sens_9axis_res = sens_9axis_res and (res['accel'][1] > -200) and (res['accel'][1] < 200)
-			sens_9axis_res = sens_9axis_res and (res['accel'][2] > 2000) and (res['accel'][2] < 3000)
+			sens_9axis_res = sens_9axis_res and (res['accel'][2] > 1843) and (res['accel'][2] < 2253)	#1.0G +-10%
 			##地磁気
 			sens_9axis_res = sens_9axis_res and not ((res['magnetometer'][0] == 0) and (res['magnetometer'][1] == 0) and (res['magnetometer'][2] == 0))
 			##判定結果通知
@@ -229,11 +229,7 @@ def tester_io(com, logger, results, ws):
 	if res:
 		if res['reg'][0] == 0x10:
 			#充電中ステータスでFailなし
-			## VSYS計測/CHG計測
-			if tz_power.check_VSYS(com, logger) and tz_power.check_CHG(com, logger):
-				utils.websocket_send(ws, '{"tester":"Charger","result":true}', results)
-			else:
-				utils.websocket_send(ws, '{"tester":"Charger","result":false}', results)
+			utils.websocket_send(ws, '{"tester":"Charger","result":true}', results)
 		else:
 			utils.websocket_send(ws, '{"tester":"Charger","result":false}', results)
 	else:

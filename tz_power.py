@@ -12,19 +12,12 @@ def check(com, ws, logger, results):
 	time.sleep(0.5)
 	#USB電源ON
 	utils.command_send(com, 'U000\r', None)
-	#バッテリー充電Enable Hi
-	utils.command_send(com, "B001\r", None)
+	
 	#TZ1電源SW ON
 	line = utils.command_send(com, "P001\r", None)
 	if not line:
 		utils.websocket_send(ws, '{"tester":"Current","result":false}', results)
 		return False
-
-	time.sleep(1)
-
-	#バッテリー充電Enable Lo
-	utils.command_send(com, "B000\r", None)
-
 	time.sleep(1)
 	
 	#過電流検出チェック
@@ -38,6 +31,27 @@ def check(com, ws, logger, results):
 		return False
 	utils.websocket_send(ws, '{"tester":"Current","result":true}', results)
 
+	cnt = 0
+	while True:
+		#バッテリー充電Enable Hi
+		utils.command_send(com, "B001\r", None)
+		time.sleep(0.5)
+		#バッテリー充電Enable Lo
+		utils.command_send(com, "B000\r", None)
+		time.sleep(0.5)
+		if check_CHG(com, logger):
+			break
+		cnt = cnt + 1
+		if cnt > 10:
+			utils.websocket_send(ws, '{"tester":"Voltage","result":false}', results)
+			return False
+		time.sleep(1)
+
+	#TZ_VSYS(1/2)計測
+	if check_VSYS(com, logger) == False:
+		utils.websocket_send(ws, '{"tester":"Voltage","result":false}', results)
+		return False
+	
 	#TZ_D3V3(1/2)計測
 	if check_3V3(com, logger) == False:
 		utils.websocket_send(ws, '{"tester":"Voltage","result":false}', results)
@@ -57,8 +71,8 @@ def check_3V3(com, logger):
 	res = json.loads(line)
 	if res == None:
 		return False
-	#範囲チェック(治具No.1 3.1[V]-3.5[V])
-	if (res['volt'] < 1906) or (res['volt'] > 2152):
+	#範囲チェック(治具No.1 3.12[V]-3.44[V])
+	if (res['volt'] < 1915) or (res['volt'] > 2118):
 		return False
 	return True
 
@@ -69,8 +83,8 @@ def check_VSYS(com, logger):
 	res = json.loads(line)
 	if res == None:
 		return False
-	#範囲チェック(治具No.1 3.8[V]-4.2[V])
-	if (res['volt'] < 2336) or (res['volt'] > 2583):
+	#範囲チェック(治具No.1 3.81[V]-4.05[V])
+	if (res['volt'] < 2342) or (res['volt'] > 2491):
 		return False
 	return True
 
@@ -81,8 +95,8 @@ def check_CHG(com, logger):
 	res = json.loads(line)
 	if res == None:
 		return False
-	#範囲チェック(治具No.1 3.8[V]-4.2[V])
-	if (res['volt'] < 2336) or (res['volt'] > 2583):
+	#範囲チェック(治具No.1 3.80[V]-4.04[V])
+	if (res['volt'] < 2336) or (res['volt'] > 2484):
 		return False
 	return True
 
