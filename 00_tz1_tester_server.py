@@ -227,9 +227,11 @@ def term():
 		com = utils.command_open()
 		tester.tester_terminate(com)	#ファームウェア停止
 		firm_writer.erase_tester(com)	#ファームウェア消去
+		tz_power.off(com)		#USB電源OFF
 		utils.command_close(com)
 	utils.websocket_send(ws, '{"tester":"Terminated","result":true}', results)
 	utils.logger_term(results)
+
 	return 'OK'
 
 if __name__ == '__main__':

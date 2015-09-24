@@ -3,6 +3,8 @@
 DEV_NAME=CDP-TZ01B_01
 TEMP_FILE=/tmp/lescan_detect
 
+sudo rm -rf $TEMP_FILE
+
 sudo hciconfig hci0 up
 sudo hcidump 2>/dev/null | grep --line-buffered -B 3 -A 1 $DEV_NAME > $TEMP_FILE &
 #echo -n "Beging scan"

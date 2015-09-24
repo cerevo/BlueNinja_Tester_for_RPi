@@ -10,6 +10,8 @@ import serial
 import sys
 import time 
 
+import tz_power
+
 def tester_sw(com, results, ws):
 	com.timeout = 5
 	#電源SW ON
@@ -94,56 +96,59 @@ def tester_io(com, logger, results, ws):
 	#ADCチェック
 	adc_res = True
 	adc_val = [0, 0, 0, 0, 0]
-	##ADCC12 Ch0
-	line = utils.command_send(com, 'a000\r', logger)
-	line = line[line.find('{'):]
-	res = json.loads(line)
-	if res:
-		adc_val[0] = res['adc']
-	##ADCC12 Ch1
-	line = utils.command_send(com, 'a001\r', logger)
-	line = line[line.find('{'):]
-	res = json.loads(line)
-	if res:
-		adc_val[1] = res['adc']
-	##ADCC12 Ch2
-	line = utils.command_send(com, 'a002\r', logger)
-	line = line[line.find('{'):]
-	res = json.loads(line)
-	if res:
-		adc_val[2] = res['adc']
-	##ADCC12 Ch3
-	line = utils.command_send(com, 'a003\r', logger)
-	line = line[line.find('{'):]
-	res = json.loads(line)
-	if res:
-		adc_val[3] = res['adc']
-	##ADCC24 Ch2
-	line = utils.command_send(com, 'a102\r', logger)
-	line = line[line.find('{'):]
-	res = json.loads(line)
-	if res:
-		adc_val[4] = res['adc']
+	try:
+		##ADCC12 Ch0
+		line = utils.command_send(com, 'a000\r', logger)
+		line = line[line.find('{'):]
+		res = json.loads(line)
+		if res:
+			adc_val[0] = res['adc']
+		##ADCC12 Ch1
+		line = utils.command_send(com, 'a001\r', logger)
+		line = line[line.find('{'):]
+		res = json.loads(line)
+		if res:
+			adc_val[1] = res['adc']
+		##ADCC12 Ch2
+		line = utils.command_send(com, 'a002\r', logger)
+		line = line[line.find('{'):]
+		res = json.loads(line)
+		if res:
+			adc_val[2] = res['adc']
+		##ADCC12 Ch3
+		line = utils.command_send(com, 'a003\r', logger)
+		line = line[line.find('{'):]
+		res = json.loads(line)
+		if res:
+			adc_val[3] = res['adc']
+		##ADCC24 Ch2
+		line = utils.command_send(com, 'a102\r', logger)
+		line = line[line.find('{'):]
+		res = json.loads(line)
+		if res:
+			adc_val[4] = res['adc']
+	
+		## 判定
+		### ADCC12 Ch0
+		adc_res = adc_res and (adc_val[0] < 64000) and (adc_val[0] > 48000)
+		### ADCC12 Ch1
+		adc_res = adc_res and (adc_val[1] < adc_val[0])
+		### ADCC12 Ch2
+		adc_res = adc_res and (adc_val[2] < adc_val[1])
+		### ADCC12 Ch3
+		adc_res = adc_res and (adc_val[3] < adc_val[2]) and (adc_val[3] > 16000)
+		### ADCC24 Ch2
+		adc_res = adc_res and (adc_val[4] < 1800000) and (adc_val[4] > 800000)
+		### 判定結果通知
+		if adc_res:
+			utils.websocket_send(ws, '{"tester":"ADC","result":true}', results)
+		else:
+			utils.websocket_send(ws, '{"tester":"ADC","result":false}', results)
+	except:
+		utils.websocket_send(ws, '{"tester":"ADC","result":false}', results)
 
 	#ADC電源OFF
 	utils.command_send(com, 'A000\r', None)
-
-	## 判定
-	### ADCC12 Ch0
-	adc_res = adc_res and (adc_val[0] < 64000) and (adc_val[0] > 48000)
-	### ADCC12 Ch1
-	adc_res = adc_res and (adc_val[1] < adc_val[0])
-	### ADCC12 Ch2
-	adc_res = adc_res and (adc_val[2] < adc_val[1])
-	### ADCC12 Ch3
-	adc_res = adc_res and (adc_val[3] < adc_val[2]) and (adc_val[3] > 16000)
-	### ADCC24 Ch2
-	adc_res = adc_res and (adc_val[4] < 1800000) and (adc_val[4] > 800000)
-	### 判定結果通知
-	if adc_res:
-		utils.websocket_send(ws, '{"tester":"ADC","result":true}', results)
-	else:
-		utils.websocket_send(ws, '{"tester":"ADC","result":false}', results)
 
 	## UART Echo
 	time.sleep(0.1)
@@ -162,16 +167,19 @@ def tester_io(com, logger, results, ws):
 
 	## I2C PingPong
 	line = utils.command_send(com, 'i000\r', logger)
-	line = line[line.find('{'):]
-	res = json.loads(line)
-	if res:
-		if res['recv'] == 'PONG':
-			utils.websocket_send(ws, '{"tester":"I2C","result":true}', results)
+	try:
+		line = line[line.find('{'):]
+		res = json.loads(line)
+		if res:
+			if res['recv'] == 'PONG':
+				utils.websocket_send(ws, '{"tester":"I2C","result":true}', results)
+			else:
+				utils.websocket_send(ws, '{"tester":"I2C","result":false}', results)
 		else:
 			utils.websocket_send(ws, '{"tester":"I2C","result":false}', results)
-	else:
+	except:
 		utils.websocket_send(ws, '{"tester":"I2C","result":false}', results)
-
+		
 	## 9軸センサ
 	sens_9axis_res = True
 	line = utils.command_send(com, '9000\r', logger)
@@ -185,8 +193,8 @@ def tester_io(com, logger, results, ws):
 			sens_9axis_res = sens_9axis_res and (res['gyro'][1] > -100) and (res['gyro'][1] < 100)
 			sens_9axis_res = sens_9axis_res and (res['gyro'][2] > -100) and (res['gyro'][2] < 100)
 			##加速度
-			sens_9axis_res = sens_9axis_res and (res['accel'][0] > -100) and (res['accel'][0] < 100)
-			sens_9axis_res = sens_9axis_res and (res['accel'][1] > -100) and (res['accel'][1] < 100)
+			sens_9axis_res = sens_9axis_res and (res['accel'][0] > -200) and (res['accel'][0] < 200)
+			sens_9axis_res = sens_9axis_res and (res['accel'][1] > -200) and (res['accel'][1] < 200)
 			sens_9axis_res = sens_9axis_res and (res['accel'][2] > 2000) and (res['accel'][2] < 3000)
 			##地磁気
 			sens_9axis_res = sens_9axis_res and not ((res['magnetometer'][0] == 0) and (res['magnetometer'][1] == 0) and (res['magnetometer'][2] == 0))
@@ -220,7 +228,12 @@ def tester_io(com, logger, results, ws):
 	res = json.loads(line)
 	if res:
 		if res['reg'][0] == 0x10:
-			utils.websocket_send(ws, '{"tester":"Charger","result":true}', results)
+			#充電中ステータスでFailなし
+			## VSYS計測/CHG計測
+			if tz_power.check_VSYS(com, logger) and tz_power.check_CHG(com, logger):
+				utils.websocket_send(ws, '{"tester":"Charger","result":true}', results)
+			else:
+				utils.websocket_send(ws, '{"tester":"Charger","result":false}', results)
 		else:
 			utils.websocket_send(ws, '{"tester":"Charger","result":false}', results)
 	else:
