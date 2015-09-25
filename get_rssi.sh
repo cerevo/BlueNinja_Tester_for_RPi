@@ -1,6 +1,10 @@
 #!/bin/bash
 
-DEV_NAME=TZ101
+DEV_NAME=$1
+if [ -z $DEV_NAME ]
+then
+	DEV_NAME=TZ101
+fi
 TEMP_FILE=/tmp/lescan_detect
 
 sudo rm -f $TEMP_FILE

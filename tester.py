@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import config
 import utils
 
 import commands
@@ -261,7 +262,7 @@ def tester_ble(com, results, ws):
 	utils.command_send(com, 'm003\r', None)
 
 	# BLEスキャン
-	ret = commands.getstatusoutput('./get_rssi.sh')
+	ret = commands.getstatusoutput('./get_rssi.sh %s' % config.TESTER_SUFFIX)
 	if ret[0] == 0:
 		rssi = ret[1].split()[1]
 		msg = '{"tester":"BLE","result":true,"RSSI":%s}' % rssi

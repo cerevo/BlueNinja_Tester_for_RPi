@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import config
 import utils
 
 import gevent 
@@ -72,7 +73,7 @@ def check_3V3(com, logger):
 	if res == None:
 		return False
 	#範囲チェック(治具No.1 3.12[V]-3.44[V])
-	if (res['volt'] < 1915) or (res['volt'] > 2118):
+	if (res['volt'] < config.LOWER_3V3) or (res['volt'] > config.UPPER_3V3):
 		return False
 	return True
 
@@ -84,11 +85,12 @@ def check_VSYS(com, logger):
 	if res == None:
 		return False
 	#範囲チェック(治具No.1 3.81[V]-4.05[V])
-	if (res['volt'] < 2342) or (res['volt'] > 2491):
+	if (res['volt'] < config.LOWER_VSYS) or (res['volt'] > config.UPPER_VSYS):
 		return False
 	return True
 
 def check_CHG(com, logger):
+	print "L:%d, U:%d" % (config.LOWER_CHG, config.UPPER_CHG)
 	#CHG(1/2)計測
 	line = utils.command_send(com, "V003\r", logger)
 	line = line[line.find('{'):]
@@ -96,7 +98,7 @@ def check_CHG(com, logger):
 	if res == None:
 		return False
 	#範囲チェック(治具No.1 3.80[V]-4.04[V])
-	if (res['volt'] < 2336) or (res['volt'] > 2484):
+	if (res['volt'] < config.LOWER_CHG) or (res['volt'] > config.UPPER_CHG):
 		return False
 	return True
 

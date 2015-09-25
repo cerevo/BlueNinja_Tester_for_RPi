@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import config
 import utils
 
 import commands
@@ -11,7 +12,7 @@ import time
 MOUNT_POINT = '/mnt'
 TZ1IF_DEV = '/dev/sda'
 FIRM_IF = 'fw/lpc11u35_tz1000_if.bin'
-FIRM_TESTER = 'fw/tz1_TESTER.bin'
+FIRM_TESTER = 'fw/tz1_TESTER_%s.bin' % config.TESTER_SUFFIX
 
 #マウント済みかチェック(マウントされてればデバイス名が返る)
 def check_mount():
