@@ -5,6 +5,9 @@ var inputSerial;
 //Button
 var btnStart;
 var btnInc;
+var btnDownloadLog;
+var btnReboot;
+var btnShutdown;
 //text
 var textMessage;
 //Result labels
@@ -37,6 +40,8 @@ var wsUSB;
 var wsBLE;
 var wsRTC;
 var wsTerm;
+var wsReboot;
+var wsShutdown;
 
 var serialNo;
 var urlBase;
@@ -410,6 +415,9 @@ $(function() {
 	//Button
 	btnStart = $("#btnStart");
 	btnInc = $("#btnInc");
+	btnDownloadLog = $("#btnDownloadLog");
+	btnReboot = $("#btnReboot");
+	btnShutdown = $("#btnShutdown");
 	//Text
 	textMessage = $('#textMessage');
 	//Result labels
@@ -446,5 +454,27 @@ $(function() {
 	btnInc.click(function() {
 		index = parseInt(inputSerial.val());
 		inputSerial.val(('00000' + (index + 1)).slice(-5));
+	});
+
+	btnDownloadLog.click(function() {
+		window.open('/download_log');
+	});
+
+	btnReboot.click(function() {
+		if (window.confirm('Run a reboot.')) {
+			wsReboot = new WebSocket(urlBase + '/reboot');
+			wsReboot.onopen = function() {
+				wsReboot.send('');
+			};
+		}
+	});
+
+	btnShutdown.click(function() {
+		if (window.confirm('Run a shutdown.')) {
+			wsShutdown = new WebSocket(urlBase + '/shutdown');
+			wsShutdown.onopen = function() {
+				wsShutdown.send('');
+			};
+		}
 	});
 });

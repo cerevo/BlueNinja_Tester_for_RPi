@@ -1,8 +1,10 @@
 # coding: utf-8
+import commands
 import os
 import os.path
 import serial
 import sys
+import datetime
 
 COM_DEV  = '/dev/ttyUSB0'
 COM_BOUD = 9600
@@ -17,6 +19,11 @@ def logger_term(logger):
 def logger_put(logger, msg):
 	if logger:
 		logger.write(msg)
+
+def logger_archive():
+	path = "static/logs.txz"
+	ret = commands.getstatusoutput("tar cJf %s logs/" % path);
+	return [ret[0], path]
 
 #コマンド送信
 def command_open(timeout=5):
@@ -44,3 +51,11 @@ def websocket_send(ws, cmd, logger):
 	if logger:
 		logger.write('%s\r\n' % cmd)
 
+#OS
+def system_shutdown():
+	ret = commands.getstatusoutput("sudo shutdown -h now")
+	return ret[0]
+
+def system_reboot():
+	ret = commands.getstatusoutput("sudo shutdown -r now")
+	return ret[0]

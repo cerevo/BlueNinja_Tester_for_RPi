@@ -3,7 +3,7 @@
 
 from geventwebsocket.handler import WebSocketHandler
 from gevent.pywsgi import WSGIServer
-from flask import Flask, render_template, request
+from flask import Flask, render_template, redirect, request
 from werkzeug.exceptions import abort
 
 import time
@@ -233,6 +233,29 @@ def term():
 	utils.logger_term(results)
 
 	return 'OK'
+
+@app.route('/reboot')
+def reboot():
+	ws = request.environ['wsgi.websocket'] 
+	if not ws:
+		abort(400)
+	utils.system_reboot()
+	return 'OK'
+
+@app.route('/shutdown')
+def shutdown():
+	ws = request.environ['wsgi.websocket'] 
+	if not ws:
+		abort(400)
+	utils.system_shutdown()
+	return 'OK'
+
+@app.route('/download_log')
+def download_log():
+	ret = utils.logger_archive()
+	if ret[0] == 0:
+		return  redirect("/%s" % ret[1])
+	abort(500)
 
 if __name__ == '__main__':
 	http_server = WSGIServer(('', 5000), app, handler_class=WebSocketHandler)
