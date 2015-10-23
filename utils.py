@@ -22,7 +22,7 @@ def logger_put(logger, msg):
 
 def logger_archive():
 	path = "static/logs.txz"
-	ret = commands.getstatusoutput("tar cJf %s logs/" % path);
+	ret = commands.getstatusoutput("tar cJf %s logs/ results/" % path);
 	return [ret[0], path]
 
 #コマンド送信
