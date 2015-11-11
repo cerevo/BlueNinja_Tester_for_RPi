@@ -2,6 +2,7 @@
 var panelMessage;
 //Input
 var inputSerial;
+var inputSerialPrefix;
 //Button
 var btnStart;
 var btnInc;
@@ -10,6 +11,7 @@ var btnReboot;
 var btnShutdown;
 //text
 var textMessage;
+var confSerialPrefix;
 //Result labels
 var resCurrent;
 var resVoltage;
@@ -412,6 +414,8 @@ $(function() {
 	//Input
 	inputSerial = $("#inputSerial");
 	inputSerial.val("00000");
+	inputSerialPrefix = $("#inputSerialPrefix");
+	inputSerialPrefix.val("TZ123");
 	//Button
 	btnStart = $("#btnStart");
 	btnInc = $("#btnInc");
@@ -420,6 +424,8 @@ $(function() {
 	btnShutdown = $("#btnShutdown");
 	//Text
 	textMessage = $('#textMessage');
+	confSerialPrefix = $("#confSerialPrefix");
+	confSerialPrefix.text(inputSerialPrefix.val());
 	//Result labels
 	resCurrent = $("#resCurrent");
 	resVoltage = $("#resVoltage");
@@ -442,7 +448,7 @@ $(function() {
 	urlBase = 'ws://' + $(location).attr('host');
 
 	btnStart.click(function() {
-		serialNo = 'TZ159' + ('00000' + inputSerial.val()).slice(-5);
+		serialNo = inputSerialPrefix.val() + ('00000' + inputSerial.val()).slice(-5);
 		result_reset();
 		wsStart  = new WebSocket(urlBase + '/start');
 		wsStart.onmessage = wsStart_onmessage;
@@ -476,5 +482,9 @@ $(function() {
 				wsShutdown.send('');
 			};
 		}
+	});
+
+	inputSerialPrefix.change(function() {
+		confSerialPrefix.text(inputSerialPrefix.val());
 	});
 });

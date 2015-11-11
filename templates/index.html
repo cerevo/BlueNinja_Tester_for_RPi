@@ -29,8 +29,8 @@
                         <div class="form-group">
                             <label class="sr-only" for="inputSerial">Serial Number</label>
                                 <div class="input-group">
-                                	<div class="input-group-addon">TZ159</div>
-                                	<input type="text" class="form-control" id="inputSerial" placeholder="XXXXX">
+                                	<div class="input-group-addon" id="confSerialPrefix">TZxxx</div>
+                                	<input type="text" class="form-control" id="inputSerial" placeholder="XXXXXX">
 				</div>
                             </div>
                             <button id="btnInc" type="button" class="btn btn-default"><span class="glyphicon glyphicon-plus-sign"></span></button>
@@ -170,7 +170,20 @@
                         </div>
                     </div>
                     <div class="row">
-		        <div class="panel panel-warning">
+                        <div class="panel panel-info">
+                            <div class="panel-heading">
+                                <h4 class="panel-title"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span>System config</h4>
+                            </div>
+                            <div class="panel-body">
+                                <div class="input-group">
+                                	<div class="input-group-addon">Serial number prefix</div>
+                                	<input type="text" class="form-control" id="inputSerialPrefix" placeholder="TZxxx">
+				</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+		        <div class="panel panel-info">
                             <div class="panel-heading">
                                 <h4 class="panel-title"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span>System operarion</h4>
                             </div>
