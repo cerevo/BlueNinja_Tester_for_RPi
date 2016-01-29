@@ -89,7 +89,11 @@ def brakeout_firm():
 		if firm_writer.write_breakout(com):
 			utils.websocket_send(ws, '{"tester":"BreakoutBoardFirm","result":true}', results)
 		else:
-			utils.websocket_send(ws, '{"tester":"BreakoutBoardFirm","result":false}', results)
+			if firm_writer.has_usb_error():
+				utils.websocket_send(ws, '{"tester":"BreakoutBoardFirm","result":false,"recd_reboot":true}', results)
+			else:
+				utils.websocket_send(ws, '{"tester":"BreakoutBoardFirm","result":false,"recd_reboot":false}', results)
+			tz_power.off(com)
 		utils.command_close(com)
 	utils.logger_term(results)
 	return 'OK'
@@ -109,7 +113,11 @@ def tz1_firm():
 		if firm_writer.write_tester(com):
 			utils.websocket_send(ws, '{"tester":"TZ1Firm","result":true}', results)
 		else:
-			utils.websocket_send(ws, '{"tester":"TZ1Firm","result":false}', results)
+			if firm_writer.has_usb_error():
+				utils.websocket_send(ws, '{"tester":"TZ1Firm","result":false,"recd_reboot":true}', results)
+			else:
+				utils.websocket_send(ws, '{"tester":"TZ1Firm","result":false,"recd_reboot":false}', results)
+			tz_power.off(com)
 		utils.command_close(com)
 	utils.logger_term(results)
 	return 'OK'
@@ -128,7 +136,8 @@ def switch():
 		utils.websocket_send(ws, '{"tester":"SW2","result":true}', results)
 	else:
 		com = utils.command_open()
-		tester.tester_sw(com, results, ws)
+		if tester.tester_sw(com, results, ws) == False:
+			tz_power.off(com)
 		utils.command_close(com)
 	utils.logger_term(results)
 	return 'OK'
@@ -158,6 +167,7 @@ def io():
 		utils.websocket_send(ws, '{"tester":"Charger","result":true}', results)
 	else:
 		com = utils.command_open()
+		com.timeout = 5
 		tester.tester_io(com, logger, results, ws)
 		utils.command_close(com)
 	utils.logger_term(logger)

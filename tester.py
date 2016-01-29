@@ -23,6 +23,7 @@ def tester_sw(com, results, ws):
 	line = com.readline()
 	print(line)
 	if line.find('TZ1 TEST PROGRAM') == -1:
+		tz_power.off(com)
 		msg = '{"tester":"RUN","result":false}'
 		utils.websocket_send(ws, msg, results)
 		
@@ -37,6 +38,7 @@ def tester_sw(com, results, ws):
 	line = com.readline()
 	print(line)
 	if line.find('POWER INIT') == -1:
+		tz_power.off(com)
 		utils.websocket_send(ws, '{"tester":"SW1","result":false}', results)
 		return False
 	utils.websocket_send(ws, '{"tester":"SW1","result":true}', results)
@@ -46,6 +48,7 @@ def tester_sw(com, results, ws):
 	line = com.readline()
 	print(line)
 	if line.find("RUNNING") == -1:
+		tz_power.off(com)
 		utils.websocket_send(ws, '{"tester":"SW2","result":false}', results)
 		return False
 
@@ -159,7 +162,7 @@ def tester_io(com, logger, results, ws):
 	com_echo.flushInput()
 	com_echo.write(echo_msg)
 	line = com_echo.readline()
-	logger.write('{"cmd":"UART","send":"%s","recv":"%s"}' % (echo_msg.strip(), line.strip()))
+	logger.write('{"cmd":"UART","send":"%s","recv":"%s"}\r\n' % (echo_msg.strip(), line.strip()))
 	if line == echo_msg:
 		utils.websocket_send(ws, '{"tester":"UART","result":true}', results)
 	else:
@@ -208,32 +211,41 @@ def tester_io(com, logger, results, ws):
 			utils.websocket_send(ws, '{"tester":"9-Axis","result":false}', results)
 	except:
 		print "Exception: ", sys.exc_info()[0]
+		utils.websocket_send(ws, '{"tester":"9-Axis","result":false}', results)
 		
 	# 気圧センサー
 	sens_ap_res = True
 	line = utils.command_send(com, 'p000\r', logger)
-	line = line[line.find('{'):]
-	res = json.loads(line)
-	if res:
-		sens_ap_res = ((res['airpressure'] / 256) > 80000) and ((res['airpressure'] / 256) < 120000)
-		if sens_ap_res:
-			utils.websocket_send(ws, '{"tester":"Airpressure","result":true}', results)
+	try:
+		line = line[line.find('{'):]
+		res = json.loads(line)
+		if res:
+			sens_ap_res = ((res['airpressure'] / 256) > 80000) and ((res['airpressure'] / 256) < 120000)
+			if sens_ap_res:
+				utils.websocket_send(ws, '{"tester":"Airpressure","result":true}', results)
+			else:
+				utils.websocket_send(ws, '{"tester":"Airpressure","result":false}', results)
 		else:
 			utils.websocket_send(ws, '{"tester":"Airpressure","result":false}', results)
-	else:
+	except:
+		print "Exception: ", sys.exc_info()[0]
 		utils.websocket_send(ws, '{"tester":"Airpressure","result":false}', results)
 		
 	# 充電ICステータス
 	line = utils.command_send(com, 'c000\r', logger)
-	line = line[line.find('{'):]
-	res = json.loads(line)
-	if res:
-		if res['reg'][0] == 0x10:
-			#充電中ステータスでFailなし
-			utils.websocket_send(ws, '{"tester":"Charger","result":true}', results)
+	try:
+		line = line[line.find('{'):]
+		res = json.loads(line)
+		if res:
+			if res['reg'][0] == 0x10:
+				#充電中ステータスでFailなし
+				utils.websocket_send(ws, '{"tester":"Charger","result":true}', results)
+			else:
+				utils.websocket_send(ws, '{"tester":"Charger","result":false}', results)
 		else:
 			utils.websocket_send(ws, '{"tester":"Charger","result":false}', results)
-	else:
+	except:
+		print "Exception: ", sys.exc_info()[0]
 		utils.websocket_send(ws, '{"tester":"Charger","result":false}', results)
 
 	#選択モードへ切り替え

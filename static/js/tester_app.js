@@ -14,7 +14,9 @@ var textMessage;
 var confSerialPrefix;
 //Result labels
 var resCurrent;
-var resVoltage;
+var resVCHG;
+var resVSYS;
+var resV3D3;
 var resBrakeoutBoardFirm;
 var resTZ1Firm;
 var resTesterRun;
@@ -99,6 +101,12 @@ function message_set_failed()
 	textMessage.text(serialNo + ": TEST FAILED");
 }
 
+function message_set_usb_error()
+{
+	textMessage.addClass('text-danger');
+	textMessage.text("Detected USB error. Please run \"Reboot\".");
+}
+
 function res_ble_set_rssi(rssi)
 {
 	$('#resBLE_RSSI').text(rssi + ' dB');
@@ -120,8 +128,12 @@ function wsStart_onmessage(e)
 		wsPower.onopen = function() {
 			resCurrent.removeClass('label-default');
 			resCurrent.addClass('label-info');
-			resVoltage.removeClass('label-default');
-			resVoltage.addClass('label-info');
+			resVCHG.removeClass('label-default');
+			resVCHG.addClass('label-info');
+			resVSYS.removeClass('label-default');
+			resVSYS.addClass('label-info');
+			resV3D3.removeClass('label-default');
+			resV3D3.addClass('label-info');
 			wsPower.send('');
 		}
 	}
@@ -141,21 +153,46 @@ function wsPower_onmessage(e)
 				message_set_failed();
 			}
 			break;
-		case 'Voltage':
-			resVoltage.removeClass('label-info');
+		case 'VCHG':
+			resVCHG.removeClass('label-info');
 			if (json.result) {
-				resVoltage.addClass('label-success');
-				//ブレイクアウトボードのファーム書き込み実行
-				wsBbFirm = new WebSocket(urlBase + '/bbfirm');
-				wsBbFirm.onmessage = wsBbFirm_onmessage
-				wsBbFirm.onopen = function() {
-					resBrakeoutBoardFirm.removeClass('label-default');
-					resBrakeoutBoardFirm.addClass('label-info');
-					wsBbFirm.send('');
-				};
+				resVCHG.addClass('label-success');
+			} else {
+				resVCHG.addClass('label-danger');
+				message_set_failed();
+			}
+			break;
+		case 'VSYS':
+			resVSYS.removeClass('label-info');
+			if (json.result) {
+				resVSYS.addClass('label-success');
+			} else {
+				resVSYS.addClass('label-danger');
+				message_set_failed();
+			}
+			break;
+		case 'V3D3':
+			resV3D3.removeClass('label-info');
+			if (json.result) {
+				resV3D3.addClass('label-success');
+
+				success  = resVCHG.hasClass('label-success');
+				success &= resVSYS.hasClass('label-success');
+				if (success) {
+					//ブレイクアウトボードのファーム書き込み実行
+					wsBbFirm = new WebSocket(urlBase + '/bbfirm');
+					wsBbFirm.onmessage = wsBbFirm_onmessage
+					wsBbFirm.onopen = function() {
+						resBrakeoutBoardFirm.removeClass('label-default');
+						resBrakeoutBoardFirm.addClass('label-info');
+						wsBbFirm.send('');
+					};
+				} else {
+					message_set_failed();
+				}
 			} else {
 				/* テスト終了 */
-				resVoltage.addClass('label-danger');
+				resV3D3.addClass('label-danger');
 				message_set_failed();
 			}
 			break;
@@ -180,7 +217,11 @@ function wsBbFirm_onmessage(e)
 	} else {
 		/* テスト終了 */
 		resBrakeoutBoardFirm.addClass('label-danger');
-		message_set_failed();
+		if (json.recd_reboot) {
+			message_set_usb_error();
+		} else {
+			message_set_failed();
+		}
 	}
 }
 
@@ -206,7 +247,11 @@ function wsTzFirm_onmessage(e)
 	} else {
 		/* テスト終了 */
 		resTZ1Firm.addClass('label-danger');
-		message_set_failed();
+		if (json.recd_reboot) {
+			message_set_usb_error();
+		} else {
+			message_set_failed();
+		}
 	}
 }
 
@@ -428,7 +473,9 @@ $(function() {
 	confSerialPrefix.text(inputSerialPrefix.val());
 	//Result labels
 	resCurrent = $("#resCurrent");
-	resVoltage = $("#resVoltage");
+	resVCHG = $("#resVCHG");
+	resVSYS = $("#resVSYS");
+	resV3D3 = $("#resV3D3");
 	resBrakeoutBoardFirm = $("#resBrakeoutBoardFirm");
 	resTZ1Firm = $("#resTZ1Firm");
 	resTesterRun = $("#resTesterRun");
@@ -470,7 +517,16 @@ $(function() {
 		if (window.confirm('Run a reboot.')) {
 			wsReboot = new WebSocket(urlBase + '/reboot');
 			wsReboot.onopen = function() {
+				btnStart.prop('disabled', true);
+				btnDownloadLog.prop('disabled', true);
+				btnReboot.prop('disabled', true);
+				btnShutdown.prop('disabled', true);
 				wsReboot.send('');
+				textMessage.text("Running reboot process...");
+
+				setInterval(function() {
+					location.reload(true);
+				}, 60000);
 			};
 		}
 	});
@@ -479,7 +535,12 @@ $(function() {
 		if (window.confirm('Run a shutdown.')) {
 			wsShutdown = new WebSocket(urlBase + '/shutdown');
 			wsShutdown.onopen = function() {
+				btnStart.prop('disabled', true);
+				btnDownloadLog.prop('disabled', true);
+				btnReboot.prop('disabled', true);
+				btnShutdown.prop('disabled', true);
 				wsShutdown.send('');
+				textMessage.text("Running shutdown process...");
 			};
 		}
 	});

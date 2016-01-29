@@ -129,3 +129,9 @@ def erase_tester(com):
 	utils.command_send(com, 'E000\r', None) #イレース OFF
 	utils.command_send(com, 'P000\r', None) #電源SW   OFF
 	
+def has_usb_error():
+	ret = commands.getstatusoutput("./check_msc_error.sh")
+	print ret[1]
+	is_error = (ret[1] != "0")
+	print is_error
+	return is_error
