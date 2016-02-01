@@ -130,10 +130,13 @@ function wsStart_onmessage(e)
 			resCurrent.addClass('label-info');
 			resVCHG.removeClass('label-default');
 			resVCHG.addClass('label-info');
+			resVCHG.html('VCHG');
 			resVSYS.removeClass('label-default');
 			resVSYS.addClass('label-info');
+			resVSYS.html('VSYS');
 			resV3D3.removeClass('label-default');
 			resV3D3.addClass('label-info');
+			resV3D3.html('V3D3');
 			wsPower.send('');
 		}
 	}
@@ -161,6 +164,7 @@ function wsPower_onmessage(e)
 				resVCHG.addClass('label-danger');
 				message_set_failed();
 			}
+			resVCHG.html('VCHG: ' + json.volt);
 			break;
 		case 'VSYS':
 			resVSYS.removeClass('label-info');
@@ -170,6 +174,7 @@ function wsPower_onmessage(e)
 				resVSYS.addClass('label-danger');
 				message_set_failed();
 			}
+			resVSYS.html('VSYS: ' + json.volt);
 			break;
 		case 'V3D3':
 			resV3D3.removeClass('label-info');
@@ -195,6 +200,7 @@ function wsPower_onmessage(e)
 				resV3D3.addClass('label-danger');
 				message_set_failed();
 			}
+			resV3D3.html('V3D3: ' + json.volt);
 			break;
 	}
 }
