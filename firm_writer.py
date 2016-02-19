@@ -11,7 +11,8 @@ import time
 
 MOUNT_POINT = '/mnt'
 TZ1IF_DEV = '/dev/sda'
-FIRM_IF = 'fw/lpc11u35_tz1000_if.bin'
+#FIRM_IF = 'fw/lpc11u35_tz1000_if.bin'
+FIRM_IF = 'fw/lpc11u35_tz10xx_tz1-sb_if.bin'
 FIRM_TESTER = 'fw/tz1_TESTER_%s.bin' % config.TESTER_SUFFIX
 
 #マウント済みかチェック(マウントされてればデバイス名が返る)
@@ -77,8 +78,18 @@ def write_breakout(com):
 	return ret
 
 def write_tester(com):
+	#ストレージ認識待ち
+	cnt = 0
+	while os.path.exists(TZ1IF_DEV) == False:
+		if cnt > 100:
+			ret = False
+			break
+		cnt = cnt + 1
+		time.sleep(0.1)
+
 	#マウント済みか確認
 	mount = check_mount()
+	print mount
 	if mount == '':
 		mount = TZ1IF_DEV
 		if os.path.exists(mount):
@@ -99,18 +110,21 @@ def write_tester(com):
 	if ret[0] != 0:
 		print("cp failed: %s" % ret[1])
 		return False
+	time.sleep(1)
 	#アンマウント
 	ret = umount_tz1(mount)
 	#ファームウェア起動待ち
 	cnt = 0
 	while os.path.exists(mount) == True:
 		if cnt > 100:
+			print "Detach detection failed."
 			return False
 		cnt = cnt + 1
 		time.sleep(0.1)
 	cnt = 0
 	while os.path.exists(mount) == False:
 		if cnt > 100:
+			print "Attach detection failed."
 			return False
 		cnt = cnt + 1
 		time.sleep(0.1)
