@@ -11,8 +11,7 @@ import time
 
 MOUNT_POINT = '/mnt'
 TZ1IF_DEV = '/dev/sda'
-#FIRM_IF = 'fw/lpc11u35_tz1000_if.bin'
-FIRM_IF = 'fw/lpc11u35_tz10xx_tz1-sb_if.bin'
+FIRM_IF = 'fw/lpc11u35_blueninja_if_20170101.bin'
 FIRM_TESTER = 'fw/tz1_TESTER_%s.bin' % config.TESTER_SUFFIX
 
 #マウント済みかチェック(マウントされてればデバイス名が返る)
